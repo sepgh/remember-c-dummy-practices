@@ -147,6 +147,7 @@ int main(int argc, char* args[]){
         }
 
     }
+    printf("Game had no winner");
 
     return 0;
 }
