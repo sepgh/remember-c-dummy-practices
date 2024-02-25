@@ -1,10 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 
+typedef enum {
+    LL_INT = sizeof(int),
+    LL_CHAR = sizeof(char),
+    LL_UINT64 = sizeof(unsigned long long)
+} DataType;
+
+
 typedef struct Node {
-    int value;
+    DataType type;
+    void* value;
     size_t* next;
 } Node;
 
@@ -15,28 +24,34 @@ typedef struct LinkedList {
 } LinkedList;
 
 
-size_t* create_node(int value){
-    size_t* p = malloc(sizeof(Node));
+size_t* create_node(DataType type, void* value){
+    size_t* p = malloc(sizeof(DataType) + sizeof(void*) + sizeof(size_t));  // TODO: find valid size
     if (p == NULL){
         return NULL;
     }
 
-    *p = value;
+    *p = type;
     *(&((Node*) p)->next) = NULL;
+
+    if(memcpy(&((Node*) p)->value, value, type) == NULL){
+        free(p);
+        return NULL;
+    }
+
     return p;
 }
 
-size_t* append(LinkedList* linkedList, int data){
+size_t* append(LinkedList* linkedList, DataType type, void* value){
     size_t* node;
     if (linkedList->root == NULL){
-        node = create_node(data);
+        node = create_node(type, value);
         linkedList->root = node;
     }else{
         Node* last = (Node*) linkedList->root;
         while(last->next != NULL){
             last = (Node*) last->next;
         }
-        node = create_node(data);
+        node = create_node(type, value);
         last->next = node;
     }
     if (node == NULL){
@@ -57,7 +72,7 @@ void destroy(LinkedList* linkedList){
 }
 
 
-bool get(LinkedList* linkedList, int index, int* value){
+bool get(LinkedList* linkedList, int index, void* value){
     if (index < 0){
         return false;
     }
@@ -72,7 +87,7 @@ bool get(LinkedList* linkedList, int index, int* value){
     }
 
     if (node != NULL){
-        *value = node->value;
+        memcpy(value, &node->value, node->type);
         return true;
     }
     return false;
@@ -81,15 +96,31 @@ bool get(LinkedList* linkedList, int index, int* value){
 
 int main(void){
     LinkedList list = {};
-    append(&list, 5);
-    append(&list, 10);
+    int v1 = 5;
+    int v2 = 10;
+    append(&list, LL_INT, &v1);
+    append(&list, LL_INT, &v2);
 
-    int v;
-    get(&list, 0, &v);
-    printf("i=0, v=%d \n", v);
+    unsigned long long v3 = 64;
+    if (append(&list, LL_UINT64, &v3) == NULL){
+        printf("Failed to store UINT64\n");
+    }
 
-    get(&list, 1, &v);
-    printf("i=1, v=%d \n", v);
+    int v = 0;
+    if(get(&list, 0, &v)){
+        printf("i=0, v=%d \n", v);
+    }
+
+    if(get(&list, 1, &v)){
+        printf("i=1, v=%d \n", v);
+    }
+
+    unsigned long long get_v2 = 0;
+    if(get(&list, 2, &get_v2)){
+        printf("i=2, v=%llu \n", get_v2);
+    }else{
+        printf("WTF?\n");
+    }
 
     printf("Can I get i=2? %c \n", get(&list, 2, &v) ? 'Y' : 'N');
     
