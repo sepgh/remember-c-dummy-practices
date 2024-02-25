@@ -13,8 +13,8 @@ typedef enum {
 
 typedef struct Node {
     DataType type;
-    void* value;
     size_t* next;
+    void* value;
 } Node;
 
 
@@ -25,7 +25,7 @@ typedef struct LinkedList {
 
 
 size_t* create_node(DataType type, void* value){
-    size_t* p = malloc(sizeof(DataType) + sizeof(void*) + sizeof(size_t));  // TODO: find valid size
+    size_t* p = malloc(sizeof(DataType) + sizeof(void*) + type + sizeof(size_t));
     if (p == NULL){
         return NULL;
     }
@@ -33,7 +33,8 @@ size_t* create_node(DataType type, void* value){
     *p = type;
     *(&((Node*) p)->next) = NULL;
 
-    if(memcpy(&((Node*) p)->value, value, type) == NULL){
+    ((Node*) p)->value = memcpy(&((Node*) p)->value, value, type);
+    if(((Node*) p)->value == NULL){
         free(p);
         return NULL;
     }
