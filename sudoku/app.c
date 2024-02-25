@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 
 typedef struct Sudoku {
@@ -38,6 +39,39 @@ void print_board(Sudoku* sudoku){
     }
     printf("\n");
 }
+
+
+bool read_board(char* path, Sudoku* sudoko){
+    FILE* file = fopen(path, "r");
+    if (file == NULL){
+        return false;
+    }
+
+    size_t buffer_size = 24;
+    char buffer_in[buffer_size];
+
+    int row = 0;
+    while(fgets(buffer_in, buffer_size, file) != NULL){
+        sscanf(
+            buffer_in,
+            "%d %d %d  %d %d %d  %d %d %d",
+            &sudoko->board[row][0],
+            &sudoko->board[row][1],
+            &sudoko->board[row][2],
+
+            &sudoko->board[row][3],
+            &sudoko->board[row][4],
+            &sudoko->board[row][5],
+
+            &sudoko->board[row][6],
+            &sudoko->board[row][7],
+            &sudoko->board[row][8]
+        );
+        row++;
+    }
+    fclose(file);
+}
+
 
 void generate_board(Sudoku* sudoko){
     sudoko->board[0][0] = 4;
@@ -161,11 +195,15 @@ bool solve(Sudoku* sudoku, int index){
 
 int main(int argc, char* args[]){
     Sudoku sudoku = {};
-    generate_board(&sudoku);
+    read_board("board.txt", &sudoku);
     print_board(&sudoku);
+    struct timeval stop, start;
+    gettimeofday(&start, NULL);
     bool solved = solve(&sudoku, 0);
+    gettimeofday(&stop, NULL);
     if (solved){
         printf("Solved! \n");
+        printf("took %lu microseconds\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec); 
     }
     print_board(&sudoku);
     return 0;
